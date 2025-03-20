@@ -25,7 +25,7 @@ fn main() {
 fn create_table() {
 	let connection = sqlite::open("db.sqlite").unwrap();
 
-	let query = "CREATE TABLE coops (name TEXT, url TEXT, country TEXT, region TEXT, city TEXT, address TEXT, phone_number TEXT, email_address TEXT, notes TEXT)";
+	let query = "CREATE TABLE coops (name TEXT, url TEXT, country TEXT, region TEXT, vicinity TEXT, city TEXT, address TEXT, phone_number TEXT, email_address TEXT, notes TEXT)";
 
 	connection.execute(query).unwrap();
 }
@@ -37,6 +37,7 @@ fn add_to_table() {
 	let mut url = String::new();
 	let mut country = String::new();
 	let mut region = String::new();
+	let mut vicinity = String::new();
 	let mut city = String::new();
 	let mut address = String::new();
 	let mut phone_number = String::new();
@@ -51,6 +52,8 @@ fn add_to_table() {
 	io::stdin().read_line(&mut country).expect("error: unable to read user input");
 	println!("Enter a region");
 	io::stdin().read_line(&mut region).expect("error: unable to read user input");
+	println!("Enter a vicinity");
+	io::stdin().read_line(&mut vicinity).expect("error: unable to read user input");
 	println!("Enter a city");
 	io::stdin().read_line(&mut city).expect("error: unable to read user input");
 	println!("Enter an address");
