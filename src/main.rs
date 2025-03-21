@@ -10,24 +10,28 @@ use debug_print::{debug_print, debug_println, debug_eprint, debug_eprintln};
 fn main() {
 	let mut option = String::new();
 
-	println!("1: create database\n2: add to database\n3: save html page\nChoose an option");
-	io::stdin().read_line(&mut option).expect("error: unable to read user input");
+	loop {
+		option = String::new();
 
-	if option == "1\n" {
-		create_table();
-	} else if option == "2\n" {
-		add_to_table();
-	} else if option == "3\n" {
-		save_html();
-	} else {
-		println!("That's not a valid option");
+		println!("1: create database\n2: add to database\n3: save html page\nChoose an option");
+		io::stdin().read_line(&mut option).expect("error: unable to read user input");
+
+		if option == "1\n" {
+			create_table();
+		} else if option == "2\n" {
+			add_to_table();
+		} else if option == "3\n" {
+			save_html();
+		} else {
+			println!("That's not a valid option");
+		}
 	}
 }
 
 fn create_table() {
 	let connection = sqlite::open("db.sqlite").unwrap();
 
-	let query = "CREATE TABLE coops (name TEXT, url TEXT, country TEXT, region TEXT, vicinity TEXT, city TEXT, address TEXT, phone_number TEXT, email_address TEXT, notes TEXT)";
+	let query = "CREATE TABLE coops (name TEXT, products TEXT, products_type TEXT, url TEXT, country TEXT, region TEXT, vicinity TEXT, city TEXT, address TEXT, phone_number TEXT, email_address TEXT, notes TEXT)";
 
 	connection.execute(query).unwrap();
 }
@@ -36,6 +40,8 @@ fn add_to_table() {
 	let connection = sqlite::open("db.sqlite").unwrap();
 
 	let mut name = String::new();
+	let mut products = String::new();
+	let mut products_type = String::new();
 	let mut url = String::new();
 	let mut country = String::new();
 	let mut region = String::new();
@@ -50,6 +56,16 @@ fn add_to_table() {
 	io::stdin().read_line(&mut name).expect("error: unable to read user input");
 	let mut name_final = name.clone();
 	name_final.pop();
+
+	println!("Enter products");
+	io::stdin().read_line(&mut products).expect("error: unable to read user input");
+	let mut products_final = products.clone();
+	products_final.pop();
+
+	println!("Enter products type");
+	io::stdin().read_line(&mut products_type).expect("error: unable to read user input");
+	let mut products_type_final = products_type.clone();
+	products_type_final.pop();
 
 	println!("Enter a url");
 	io::stdin().read_line(&mut url).expect("error: unable to read user input");
@@ -96,7 +112,7 @@ fn add_to_table() {
 	let mut notes_final = notes.clone();
 	notes_final.pop();
 
-	let query = format!("INSERT INTO coops VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}', '{}');", name_final, url_final, country_final, region_final, vicinity_final, city_final, address_final, phone_number_final, email_address_final, notes_final);
+	let query = format!("INSERT INTO coops VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}', '{}');", name_final, products_final, products_type_final, url_final, country_final, region_final, vicinity_final, city_final, address_final, phone_number_final, email_address_final, notes_final);
 
 	connection.execute(query).unwrap();
 }
@@ -135,6 +151,8 @@ fn save_html() {
 		let mut the_item = HashMap::new();
 
 		the_item.insert(String::from("name"), statement.read::<String, _>("name").unwrap());
+		the_item.insert(String::from("products"),  statement.read::<String, _>("products").unwrap());
+		the_item.insert(String::from("products_type"), statement.read::<String, _>("products_type").unwrap());
 		the_item.insert(String::from("url"), statement.read::<String, _>("url").unwrap());
 		the_item.insert(String::from("country"), statement.read::<String, _>("country").unwrap());
 		the_item.insert(String::from("region"), statement.read::<String, _>("region").unwrap());
@@ -254,20 +272,25 @@ fn save_page(file_path: String, table: Vec<HashMap<String, String>>) {
 	let mut output_text = String::new();
 	output_text += "<!DOCTYPE html><html lang=\"en\"><head><title>Worker Coöperatives Directory</title><meta charset=\"UTF-8\"></head><body>";
 
+	output_text += "<table>";
+	output_text += "<tr>";
+	output_text += "<th>Name</th>";
+	output_text += "<th>Products</th>";
+	output_text += "<th>Products Type</th>";
+	output_text += "<th>Country</th>";
+	output_text += "<th>Region</th>";
+	output_text += "<th>City</th>";
+	output_text += "<th>Address</th>";
+	output_text += "<th>Phone Number</th>";
+	output_text += "<th>Email Address</th>";
+	output_text += "<th>Notes</th>";
+	output_text += "</tr>";
+
 	for i in &table {
-		output_text += "<table>";
-		output_text += "<tr>";
-		output_text += "<th>Name</th>";
-		output_text += "<th>Country</th>";
-		output_text += "<th>Region</th>";
-		output_text += "<th>City</th>";
-		output_text += "<th>Address</th>";
-		output_text += "<th>Phone Number</th>";
-		output_text += "<th>Email Address</th>";
-		output_text += "<th>Notes</th>";
-		output_text += "</tr>";
 		output_text += "<tr>";
 		output_text += &String::from(format!("<td><a href=\"{}\">{}</a></td>", i.get(&String::from("url")).unwrap_or(&String::from("")), i.get(&String::from("name")).unwrap_or(&String::from(""))));
+		output_text += &String::from(format!("<td>{}</td>", i.get(&String::from("products")).unwrap_or(&String::from(""))));
+		output_text += &String::from(format!("<td>{}</td>", i.get(&String::from("products_type")).unwrap_or(&String::from(""))));
 		output_text += &String::from(format!("<td>{}</td>", i.get(&String::from("country")).unwrap_or(&String::from(""))));
 		output_text += &String::from(format!("<td>{}</td>", i.get(&String::from("region")).unwrap_or(&String::from(""))));
 		output_text += &String::from(format!("<td>{}</td>", i.get(&String::from("city")).unwrap_or(&String::from(""))));
@@ -276,8 +299,9 @@ fn save_page(file_path: String, table: Vec<HashMap<String, String>>) {
 		output_text += &String::from(format!("<td>{}</td>", i.get(&String::from("email_address")).unwrap_or(&String::from(""))));
 		output_text += &String::from(format!("<td>{}</td>", i.get(&String::from("notes")).unwrap_or(&String::from(""))));
 		output_text += "</tr>";
-		output_text += "</table>";
 	}
+
+	output_text += "</table>";
 	output_text += "</body></html>";
 
 	match file.write_all(output_text.as_bytes()) {
